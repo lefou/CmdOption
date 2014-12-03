@@ -4,14 +4,17 @@ import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
+import de.tototec.cmdoption.handler.CanHandle.Issue;
+
 /**
  * Apply an n-arg option to an (setter) method with n parameters of type
  * {@link String}.
- * 
+ *
  */
 public class StringMethodHandler implements CmdOptionHandler {
 
-	public boolean canHandle(final AccessibleObject element, final int argCount) {
+	public CanHandle canHandle(final AccessibleObject element, final int argCount) {
+		CanHandle canHandle = new CanHandle();
 		if (element instanceof Method) {
 			final Method method = (Method) element;
 			if (method.getParameterTypes().length == argCount) {
@@ -19,10 +22,18 @@ public class StringMethodHandler implements CmdOptionHandler {
 				for (final Class<?> p : method.getParameterTypes()) {
 					areStrings &= String.class.isAssignableFrom(p);
 				}
-				return areStrings;
+				if (!areStrings) {
+					canHandle = canHandle.addIssue(Issue.UNSUPPORTED_TYPE);
+				}
+			} else {
+				canHandle = canHandle.addIssue(Issue.WRONG_ARG_COUNT)
+						.addIssue(Issue.WRONG_METHOD_PARAMETER_COUNT);
 			}
+		} else {
+			canHandle = canHandle.addIssue(Issue.NOT_A_METHOD);
+
 		}
-		return false;
+		return canHandle;
 	}
 
 	public void applyParams(final Object config, final AccessibleObject element, final String[] args,

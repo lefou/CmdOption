@@ -3,13 +3,16 @@ package de.tototec.cmdoption.handler;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+
+import de.tototec.cmdoption.handler.CanHandle.Issue;
 
 /**
  * Apply an one-arg option to a {@link Boolean} (or <code>boolean</code>) field
  * or method.
- * 
+ *
  * Evaluates the argument to <code>true</code> if it is "true", "on" or "1".
- * 
+ *
  * @since 0.3.0
  */
 public class BooleanHandler implements CmdOptionHandler {
@@ -25,7 +28,7 @@ public class BooleanHandler implements CmdOptionHandler {
 	/**
 	 * If the list of falseWords is empty or <code>null</code>, any words not in
 	 * trueWords is considered as false.
-	 * 
+	 *
 	 * @param trueWords
 	 * @param falseWords
 	 * @param caseSensitive
@@ -36,18 +39,31 @@ public class BooleanHandler implements CmdOptionHandler {
 		this.caseSensitive = caseSensitive;
 	}
 
-	public boolean canHandle(final AccessibleObject element, final int argCount) {
-		if (element instanceof Field && argCount == 1) {
+	public CanHandle canHandle(final AccessibleObject element, final int argCount) {
+		CanHandle canHandle = new CanHandle();
+		if (argCount != 1) {
+			canHandle = canHandle.addIssue(Issue.WRONG_ARG_COUNT);
+		}
+		if (element instanceof Field) {
 			final Field field = (Field) element;
-			return field.getType().equals(Boolean.class) || field.getType().equals(boolean.class);
-		} else if (element instanceof Method && argCount == 1) {
+			if (!(field.getType().equals(Boolean.class) || field.getType().equals(boolean.class))) {
+				canHandle = canHandle.addIssue(Issue.UNSUPPORTED_TYPE);
+			}
+			if (Modifier.isFinal(field.getModifiers())) {
+				canHandle = canHandle.addIssue(Issue.UNSUPPORTED_FINAL_FIELD);
+			}
+		} else if (element instanceof Method) {
 			final Method method = (Method) element;
 			if (method.getParameterTypes().length == 1) {
 				final Class<?> type = method.getParameterTypes()[0];
-				return boolean.class.equals(type) || Boolean.class.equals(type);
+				if (!(boolean.class.equals(type) || Boolean.class.equals(type))) {
+					canHandle = canHandle.addIssue(Issue.UNSUPPORTED_TYPE);
+				}
+			} else {
+				canHandle = canHandle.addIssue(Issue.WRONG_METHOD_PARAMETER_COUNT);
 			}
 		}
-		return false;
+		return canHandle;
 	}
 
 	public void applyParams(final Object config, final AccessibleObject element, final String[] args,

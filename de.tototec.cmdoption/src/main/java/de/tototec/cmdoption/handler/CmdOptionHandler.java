@@ -5,14 +5,14 @@ import java.lang.reflect.AccessibleObject;
 /**
  * An Handler is needed to parse an Commandline option and to apply the parser
  * result to the annotated field or method.
- * 
+ *
  * @see AddToCollectionHandler
  * @see BooleanHandler
  * @see BooleanOptionHandler
  * @see PutIntoMapHandler
  * @see StringFieldHandler
  * @see StringMethodHandler
- * 
+ *
  */
 public interface CmdOptionHandler {
 
@@ -20,7 +20,7 @@ public interface CmdOptionHandler {
 	 * Return <code>true</code> if the field or method (<code>element</code>)
 	 * with the given number of arguments (<code>argCount</code>) can be handled
 	 * by this handler.
-	 * 
+	 *
 	 * @param element
 	 *            The field or method that represents an command line option.
 	 * @param argCount
@@ -28,12 +28,12 @@ public interface CmdOptionHandler {
 	 * @return <code>true</code> if the option can be parsed and applied by this
 	 *         handler.
 	 */
-	boolean canHandle(AccessibleObject element, int argCount);
+	CanHandle canHandle(AccessibleObject element, int argCount);
 
 	/**
 	 * Apply the option and it arguments (if any) to the field or method
 	 * representing the option.
-	 * 
+	 *
 	 * @param config
 	 *            The object containing the field or element to which the parsed
 	 *            values should be applied.

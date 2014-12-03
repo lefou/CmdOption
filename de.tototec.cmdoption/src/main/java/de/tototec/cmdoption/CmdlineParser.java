@@ -21,6 +21,8 @@ import java.util.Set;
 import de.tototec.cmdoption.handler.AddToCollectionHandler;
 import de.tototec.cmdoption.handler.BooleanHandler;
 import de.tototec.cmdoption.handler.BooleanOptionHandler;
+import de.tototec.cmdoption.handler.CanHandle;
+import de.tototec.cmdoption.handler.CanHandle.Issue;
 import de.tototec.cmdoption.handler.CmdOptionHandler;
 import de.tototec.cmdoption.handler.CmdOptionHandlerException;
 import de.tototec.cmdoption.handler.IntegerHandler;
@@ -504,9 +506,15 @@ public class CmdlineParser {
 		} else {
 			// walk through registered hander and find one
 			for (final CmdOptionHandler regHandle : handlerRegistry.values()) {
-				if (regHandle.canHandle(element, argsCount)) {
+				final CanHandle canHandle = regHandle.canHandle(element, argsCount);
+				if (canHandle.canHandle()) {
 					handler = regHandle;
 					break;
+				} else {
+					if (canHandle.getIssues().contains(Issue.UNSUPPORTED_FINAL_FIELD)
+							&& canHandle.getIssues().size() == 1) {
+						debug("Skipping option on final field: {0}", element);
+					}
 				}
 			}
 		}
@@ -725,10 +733,11 @@ public class CmdlineParser {
 				continue;
 			}
 
-			if (element instanceof Field && Modifier.isFinal(((Field) element).getModifiers())) {
-				debug("Skipping option on final field: {0}", element);
-				continue;
-			}
+			// if (element instanceof Field && Modifier.isFinal(((Field)
+			// element).getModifiers())) {
+			// debug("Skipping option on final field: {0}", element);
+			// continue;
+			// }
 
 			final String[] names = anno.names();
 			// The Interface itself means to specified handler

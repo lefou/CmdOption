@@ -4,11 +4,13 @@ import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
+import de.tototec.cmdoption.handler.CanHandle.Issue;
+
 /**
  * Apply an zero-arg option to an {@link Boolean} (or <code>boolean</code>)
  * field. If the option is present, the field will be evaluated to
  * <code>true</code>.
- * 
+ *
  */
 public class BooleanOptionHandler implements CmdOptionHandler {
 
@@ -31,24 +33,30 @@ public class BooleanOptionHandler implements CmdOptionHandler {
 		}
 	}
 
-	public boolean canHandle(final AccessibleObject element, final int argCount) {
+	public CanHandle canHandle(final AccessibleObject element, final int argCount) {
+		CanHandle canHandle = new CanHandle();
 		if (argCount != 0)
-			return false;
+			canHandle = canHandle.addIssue(Issue.WRONG_ARG_COUNT);
 
 		if (element instanceof Field) {
 			final Field field = (Field) element;
 			final Class<?> type = field.getType();
-			return boolean.class.equals(type) || Boolean.class.equals(type);
+			if (!(boolean.class.equals(type) || Boolean.class.equals(type))) {
+				canHandle = canHandle.addIssue(Issue.UNSUPPORTED_TYPE);
+			}
 		} else if (element instanceof Method) {
 			final Method method = (Method) element;
 			if (method.getParameterTypes().length == 0) {
-				return true;
-			}
-			if (method.getParameterTypes().length == 1) {
+				// ok
+			} else if (method.getParameterTypes().length == 1) {
 				final Class<?> type = method.getParameterTypes()[0];
-				return boolean.class.equals(type) || Boolean.class.equals(type);
+				if (!(boolean.class.equals(type) || Boolean.class.equals(type))) {
+					canHandle = canHandle.addIssue(Issue.UNSUPPORTED_TYPE);
+				}
+			} else {
+				canHandle = canHandle.addIssue(Issue.WRONG_METHOD_PARAMETER_COUNT);
 			}
 		}
-		return false;
+		return canHandle;
 	}
 }

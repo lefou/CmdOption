@@ -3,32 +3,46 @@ package de.tototec.cmdoption.handler;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
 import de.tototec.cmdoption.I18n;
+import de.tototec.cmdoption.handler.CanHandle.Issue;
 
 /**
  * Apply an one-arg option to a {@link Integer} (or <code>int</code>) field or
  * method.
- * 
+ *
  * @since 0.3.1
  */
 public class IntegerHandler implements CmdOptionHandler {
 
-	public IntegerHandler() {
-	}
+	public IntegerHandler() {}
 
-	public boolean canHandle(final AccessibleObject element, final int argCount) {
-		if (element instanceof Field && argCount == 1) {
+	public CanHandle canHandle(final AccessibleObject element, final int argCount) {
+		CanHandle canHandle = new CanHandle();
+		if (argCount != 1) {
+			canHandle = canHandle.addIssue(Issue.WRONG_ARG_COUNT);
+		}
+		if (element instanceof Field) {
 			final Field field = (Field) element;
-			return field.getType().equals(Integer.class) || field.getType().equals(int.class);
-		} else if (element instanceof Method && argCount == 1) {
+			if (!(field.getType().equals(Integer.class) || field.getType().equals(int.class))) {
+				canHandle = canHandle.addIssue(Issue.UNSUPPORTED_TYPE);
+			}
+			if (Modifier.isFinal(field.getModifiers())) {
+				canHandle = canHandle.addIssue(Issue.UNSUPPORTED_FINAL_FIELD);
+			}
+		} else if (element instanceof Method) {
 			final Method method = (Method) element;
 			if (method.getParameterTypes().length == 1) {
 				final Class<?> type = method.getParameterTypes()[0];
-				return int.class.equals(type) || Integer.class.equals(type);
+				if (!(int.class.equals(type) || Integer.class.equals(type))) {
+					canHandle = canHandle.addIssue(Issue.UNSUPPORTED_TYPE);
+				}
+			} else {
+				canHandle = canHandle.addIssue(Issue.WRONG_METHOD_PARAMETER_COUNT);
 			}
 		}
-		return false;
+		return canHandle;
 	}
 
 	public void applyParams(final Object config, final AccessibleObject element, final String[] args,

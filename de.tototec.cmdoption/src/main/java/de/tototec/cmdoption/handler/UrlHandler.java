@@ -3,22 +3,39 @@ package de.tototec.cmdoption.handler;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Arrays;
 
+import de.tototec.cmdoption.handler.CanHandle.Issue;
+
 public class UrlHandler implements CmdOptionHandler {
 
-	public boolean canHandle(final AccessibleObject element, final int argCount) {
-		if (argCount == 1) {
-			if (element instanceof Field) {
-				return ((Field) element).getType().equals(URL.class);
-			} else if (element instanceof Method) {
-				final Class<?>[] params = ((Method) element).getParameterTypes();
-				return params.length == 1 && params[0].equals(URL.class);
+	public CanHandle canHandle(final AccessibleObject element, final int argCount) {
+		CanHandle canHandle = new CanHandle();
+		if (argCount != 1) {
+			canHandle = canHandle.addIssue(Issue.WRONG_ARG_COUNT);
+		}
+		if (element instanceof Field) {
+			final Field field = (Field) element;
+			if (!(field.getType().equals(URL.class))) {
+				canHandle = canHandle.addIssue(Issue.UNSUPPORTED_TYPE);
+			}
+			if (Modifier.isFinal(field.getModifiers())) {
+				canHandle = canHandle.addIssue(Issue.UNSUPPORTED_FINAL_FIELD);
+			}
+		} else if (element instanceof Method) {
+			final Class<?>[] params = ((Method) element).getParameterTypes();
+			if (params.length == 1) {
+				if (!params[0].equals(URL.class)) {
+					canHandle = canHandle.addIssue(Issue.UNSUPPORTED_TYPE);
+				}
+			} else {
+				canHandle = canHandle.addIssue(Issue.WRONG_METHOD_PARAMETER_COUNT);
 			}
 		}
-		return false;
+		return canHandle;
 	}
 
 	public void applyParams(final Object config, final AccessibleObject element, final String[] args,

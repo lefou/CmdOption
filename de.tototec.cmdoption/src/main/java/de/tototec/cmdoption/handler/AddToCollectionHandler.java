@@ -4,6 +4,8 @@ import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Field;
 import java.util.Collection;
 
+import de.tototec.cmdoption.handler.CanHandle.Issue;
+
 /**
  * Add an one-arg option argument to a collection of strings.
  */
@@ -21,8 +23,14 @@ public class AddToCollectionHandler implements CmdOptionHandler {
 		}
 	}
 
-	public boolean canHandle(final AccessibleObject element, final int argCount) {
-		return argCount == 1 && element instanceof Field
-				&& Collection.class.isAssignableFrom(((Field) element).getType());
+	public CanHandle canHandle(final AccessibleObject element, final int argCount) {
+		CanHandle canHandle = new CanHandle();
+		if (argCount != 1) {
+			canHandle = canHandle.addIssue(Issue.WRONG_ARG_COUNT);
+		}
+		if (!(element instanceof Field && Collection.class.isAssignableFrom(((Field) element).getType()))) {
+			canHandle = canHandle.addIssue(Issue.UNSUPPORTED_TYPE);
+		}
+		return canHandle;
 	}
 }

@@ -5,9 +5,11 @@ import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Map;
 
+import de.tototec.cmdoption.handler.CanHandle.Issue;
+
 /**
  * Apply an two-arg option to an {@link Map}.
- * 
+ *
  */
 public class PutIntoMapHandler implements CmdOptionHandler {
 
@@ -24,7 +26,18 @@ public class PutIntoMapHandler implements CmdOptionHandler {
 		}
 	}
 
-	public boolean canHandle(final AccessibleObject element, final int argCount) {
-		return argCount == 2 && element instanceof Field && Map.class.isAssignableFrom(((Field) element).getType());
+	public CanHandle canHandle(final AccessibleObject element, final int argCount) {
+		CanHandle canHandle = new CanHandle();
+		if (argCount != 2) {
+			canHandle = canHandle.addIssue(Issue.UNSUPPORTED_TYPE);
+		}
+		if (element instanceof Field) {
+			if (!(Map.class.isAssignableFrom(((Field) element).getType()))) {
+				canHandle = canHandle.addIssue(Issue.UNSUPPORTED_TYPE);
+			}
+		} else {
+			canHandle = canHandle.addIssue(Issue.NOT_A_FIELD);
+		}
+		return canHandle;
 	}
 }
