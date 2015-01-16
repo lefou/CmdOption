@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
@@ -15,9 +16,8 @@ import de.tototec.cmdoption.internal.I18nFactory;
 
 public class DefaultUsageFormatter implements UsageFormatter {
 
-	private final I18n i18n = I18nFactory.getI18n(DefaultUsageFormatter.class);
-
 	private final boolean withCommandDetails;
+	private final Locale locale;
 
 	private int lineLength;
 	private int colSpace = 2;
@@ -26,10 +26,16 @@ public class DefaultUsageFormatter implements UsageFormatter {
 	private volatile LineLengthDetector lineLengthDetector;
 
 	public DefaultUsageFormatter(final boolean withCommandDetails, final int lineLength,
-			final LineLengthDetector lineLengthDetector) {
+			final LineLengthDetector lineLengthDetector, final Locale locale) {
 		this.withCommandDetails = withCommandDetails;
 		this.lineLengthDetector = lineLengthDetector;
 		this.lineLength = lineLength;
+		this.locale = locale;
+	}
+
+	public DefaultUsageFormatter(final boolean withCommandDetails, final int lineLength,
+			final LineLengthDetector lineLengthDetector) {
+		this(withCommandDetails, lineLength, lineLengthDetector, Locale.getDefault());
 	}
 
 	public DefaultUsageFormatter(final boolean withCommandDetails, final int lineLength) {
@@ -76,6 +82,7 @@ public class DefaultUsageFormatter implements UsageFormatter {
 	}
 
 	public void format(final StringBuilder output, final CmdlineModel cmdlineModel) {
+		final I18n i18n = I18nFactory.getI18n(DefaultUsageFormatter.class, locale);
 
 		final ArrayList<OptionHandle> sortedOptions = new ArrayList<OptionHandle>(cmdlineModel.getOptions());
 		for (final Iterator<OptionHandle> it = sortedOptions.iterator(); it.hasNext();) {
